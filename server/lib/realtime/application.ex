@@ -51,6 +51,9 @@ defmodule Realtime.Application do
 
     # List all child processes to be supervised
     children = [
+      Realtime.Repo,
+      Realtime.EventStore.Store,
+      {Oban, oban_config()},
       # Start the endpoint when the application starts
       RealtimeWeb.Endpoint,
       {
@@ -69,7 +72,10 @@ defmodule Realtime.Application do
         publications: publications,
         slot_name: slot_name,
         wal_position: {"0", "0"}
-      }
+      },
+      Realtime.Workflows.Manager,
+      Realtime.Interpreter.PersistentManager,
+      Realtime.Interpreter.Supervisor,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -83,5 +89,9 @@ defmodule Realtime.Application do
   def config_change(changed, _new, removed) do
     RealtimeWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  def oban_config() do
+    Application.fetch_env!(:realtime, Oban)
   end
 end
